@@ -29,8 +29,6 @@ public final class Constants {
     public static final double ConstIntakeSpeed = 0.8;
     public static final double ConstShooterSpeed = 0.8;
     public static final double ConstIndexerSpeed = 0.8;
-
-    //This is going to disappear soon
   }
   
 }
