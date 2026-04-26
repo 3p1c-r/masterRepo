@@ -6,11 +6,7 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.Constants.OperatorConstants;
-import frc.robot.commands.*;
-import frc.robot.subsystems.Intake;
-import frc.robot.subsystems.IntakeIOSim;
-import frc.robot.subsystems.Shooter;
-import frc.robot.subsystems.SwerveSubsystem;
+import frc.robot.subsystems.*;
 import swervelib.SwerveInputStream;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
@@ -24,7 +20,6 @@ import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import swervelib.simulation.ironmaple.simulation.drivesims.AbstractDriveTrainSimulation;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -40,9 +35,31 @@ public class RobotContainer {
   private final CommandPS4Controller operatorCtrl = new CommandPS4Controller(OperatorConstants.kOperatorControllerPort);
 
   // The robot's subsystems and commands are defined here...
+
+  //Subsystems
   private final Intake intake = new Intake();
   private final Shooter shooter = new Shooter();
-  
+  private final Indexer indexer = new Indexer();
+  private final Pneumatics pneumatics = new Pneumatics();
+
+  //Intake Commands
+  Command runIntake = intake.runIntake2();
+  Command runOuttake = intake.runOuttake2();
+  Command extendIntake = intake.extendIntake2();
+  Command retractIntake = intake.retractIntake2();
+
+  //Shooter Commands
+  Command runShooter = shooter.runShooter2();
+  Command runIndexer = indexer.runIndexer2();
+
+  //Pneumatic Commands
+  Command toggleSolenoid = pneumatics.toggleSolenoid();
+  Command enableCompressor = pneumatics.enableCompressor();
+  Command killCompressor = pneumatics.killCompressor();
+
+  //Other Commands
+  WaitCommand wait = new WaitCommand(1.25);
+
   private final PathPlannerAuto auto;
 
 
@@ -50,22 +67,21 @@ public class RobotContainer {
   public RobotContainer() {
     // Configure the trigger bindings
 
-    NamedCommands.registerCommand("intake", new IntakeCommand(intake));
-    NamedCommands.registerCommand("extendIntake", new extendIntakeCommand(intake));
-    NamedCommands.registerCommand("shoot", new ShooterCommand(shooter));
-    NamedCommands.registerCommand("index", new IndexerCommand(shooter));
+    NamedCommands.registerCommand("intake", runIntake);
+    NamedCommands.registerCommand("extendIntake", extendIntake);
+    NamedCommands.registerCommand("shoot", runShooter);
+    NamedCommands.registerCommand("index", runIndexer);
 
     auto = new PathPlannerAuto("rebuiltAuto");
     autoChooser = AutoBuilder.buildAutoChooser();
     SmartDashboard.putData("Auto Chooser", autoChooser);
-
-
 
     configureBindings();
   }
 
   private final SwerveSubsystem drivebase = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(), "swerve"));
 
+  //Get ChassisSpeeds to drive the robot
   public SwerveInputStream driveAngularVelocity = SwerveInputStream.of(drivebase.getSwerveDrive(),
                   () -> -driverCtrl.getLeftY() * -1,
                   () -> driverCtrl.getLeftX() * 1)
@@ -86,39 +102,41 @@ public class RobotContainer {
                                                     .robotRelative(true)
                                                     .allianceRelativeControl(false);
 
+  //Drivebase Commands
+  Command driveFieldOrientedAngularVelocity = drivebase.driveFieldOriented(driveAngularVelocity);
+  Command driveFieldOrientedAngularVelocitySim = drivebase.driveFieldOriented(driveAngularVelocitySim);
+  Command driveRobotOrientedAngularVelocity = drivebase.drive(driveRobotOriented);
+
 
   private void configureBindings() {
-    //Configure drivebase command
-    Command driveFieldOrientedAngularVelocity = drivebase.driveFieldOriented(driveAngularVelocity);
-    Command driveFieldOrientedAngularVelocitySim = drivebase.driveFieldOriented(driveAngularVelocitySim);
-    WaitCommand wait = new WaitCommand(1.25);
 
-    Command driveRobotOrientedAngularVelocity = drivebase.drive(driveRobotOriented);
-
+    //Drivebase Bindings
     drivebase.setDefaultCommand(driveFieldOrientedAngularVelocitySim);
+    driverCtrl.circle().toggleOnTrue(driveRobotOrientedAngularVelocity
+            .beforeStarting(() -> SmartDashboard.putBoolean("isRobotOriented", true))
+            .finallyDo(() -> SmartDashboard.putBoolean("isRobotOriented", false)));
 
-    //Configure subsystem commands
-   
-    driverCtrl.L1().toggleOnTrue(new IntakeCommand(intake));
-    driverCtrl.R1().toggleOnTrue(new ShooterCommand(shooter)
-            .alongWith(wait
-                          .beforeStarting(
-                                  () -> SmartDashboard.putBoolean("Waiting?", true)
-                          ).finallyDo(
-                                  () -> SmartDashboard.putBoolean("Waiting?", false)
-                          ).andThen(
-                                  new IndexerCommand(shooter)
-                          )
+    //Intake Bindings
+    driverCtrl.L1().toggleOnTrue(runIntake);
+    driverCtrl.square().toggleOnTrue(runOuttake);
+    driverCtrl.L2().toggleOnTrue(extendIntake);
+    driverCtrl.R2().toggleOnTrue(retractIntake);
+
+    //Shooter/Indexer Bindings
+    driverCtrl.R1().toggleOnTrue(runShooter
+            .alongWith(
+                    wait
+                          .beforeStarting(() -> SmartDashboard.putBoolean("Waiting?", true))
+                          .finallyDo(() -> SmartDashboard.putBoolean("Waiting?", false))
+                          .andThen(runIndexer)
             )
     );
-    driverCtrl.square().toggleOnTrue(new OuttakeCommand(intake));
-    driverCtrl.L2().toggleOnTrue(new extendIntakeCommand(intake));
-    driverCtrl.R2().toggleOnTrue(new retractIntakeCommand(intake));
 
-    driverCtrl.circle().toggleOnTrue(driveRobotOrientedAngularVelocity
-                                    .beforeStarting(() -> SmartDashboard.putBoolean("isRobotOriented", true))
-                                    .finallyDo(() -> SmartDashboard.putBoolean("isRobotOriented", false)));
-    
+    //Pneumatic Bindings
+    driverCtrl.cross().toggleOnTrue(toggleSolenoid);
+    driverCtrl.share().onTrue(enableCompressor);
+    driverCtrl.options().onTrue(killCompressor);
+
   }
 
   /**

@@ -2,6 +2,8 @@ package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.motorcontrol.VictorSP;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.SubsystemConstants;
 
@@ -29,22 +31,73 @@ public class Intake extends SubsystemBase{
         this.extendSpeed = ConstExtendIntakeSpeed; //Constants File
     }
 
-    //Run the intake
-    public void runIntake(){intakeMotor.set(intakeSpeed);}
-    //Push out game pieces in case they get stuck
-    public void runOuttake(){intakeMotor.set(-intakeSpeed);}
+    //Lambda Commands (for testing)
+    public Command runIntake2(){
+        return startEnd(
+                () -> { //run intake
+                    intakeMotor.set(intakeSpeed);
+                    System.out.println("Intake Command Called");
+                    SmartDashboard.putBoolean("Intaking?", true);
+                    SmartDashboard.putBoolean("IntakeRunning?", true);
+                },
+                () -> { //stop intake
+                    intakeMotor.set(0);
+                    System.out.println("Intake Command Stopped");
+                    SmartDashboard.putBoolean("Intaking?", false);
+                    SmartDashboard.putBoolean("IntakeRunning?", false);
+                }
+        );
+    }
 
+    public Command runOuttake2(){
+        return startEnd(
+                () -> { //outtake
+                    intakeMotor.set(-intakeSpeed);
+                    System.out.println("Outtake Command Called");
+                    SmartDashboard.putBoolean("Outtaking?", true);
+                    SmartDashboard.putBoolean("IntakeRunning?", true);
+                },
+                () -> { //stop outtake
+                    intakeMotor.set(0);
+                    System.out.println("Intake Command Stopped");
+                    SmartDashboard.putBoolean("Outtaking?", false);
+                    SmartDashboard.putBoolean("IntakeRunning?", false);
+                }
+        );
+    }
 
-    //Extend the intake outwards
-    public void extendIntake(){extendMotor.set(extendSpeed);}
-    //Retract the intake inwards
-    public void retractIntake(){extendMotor.set(-extendSpeed);}
+    public Command extendIntake2(){
+        return startEnd(
+                () -> { //extend the intake
+                    extendMotor.set(extendSpeed);
+                    System.out.println("Intake Extending");
+                    SmartDashboard.putBoolean("intakeExtending?", true);
+                    SmartDashboard.putBoolean("intakeArmRunning?", true);
+                },
+                () -> { //stop extending the intake
+                    extendMotor.set(0);
+                    System.out.println("Extending Stopped");
+                    SmartDashboard.putBoolean("intakeExtending?", false);
+                    SmartDashboard.putBoolean("intakeArmRunning?", false);
+                }
+        );
+    }
 
-
-    //Stop intake
-    public void stopIntake(){intakeMotor.set(0);}
-    //Stop extending
-    public void stopExtend(){extendMotor.set(0);}
-
+    public Command retractIntake2(){
+        return startEnd(
+                () -> { //retract the intake
+                    extendMotor.set(-extendSpeed);
+                    System.out.println("Intake Retracting");
+                    SmartDashboard.putBoolean("intakeRetracting?", true);
+                    SmartDashboard.putBoolean("intakeArmRunning?", true);
+                },
+                () -> { //stop retracting the intake
+                    extendMotor.set(0);
+                    System.out.println("Extending Stopped");
+                    SmartDashboard.putBoolean("intakeRetracting?", false);
+                    SmartDashboard.putBoolean("intakeArmRunning?", false);
+                }
+        );
+    }
 
 }
