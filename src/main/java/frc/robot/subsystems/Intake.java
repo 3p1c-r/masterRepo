@@ -1,19 +1,29 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.motorcontrol.PWMSparkMax;
 import edu.wpi.first.wpilibj.motorcontrol.VictorSP;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.SubsystemConstants;
 
 import static frc.robot.Constants.SubsystemConstants.*;
+/* An intake subsystem that can:
+* Extend outwards
+* Retract inwards
+* Take in game pieces
+* Spit out game pieces (if they're stuck)
+*
+* The intake will stop extending or retracting if it hits one of the limit switches.
+* */
 
 public class Intake extends SubsystemBase{
 
     //Declare motors, speeds, default intake extension direction, and limit switches
-    private final VictorSP intakeMotor;
-    private final VictorSP extendMotor;
+    private final PWMSparkMax intakeMotor;
+    private final PWMSparkMax extendMotor;
 
     private final double intakeSpeed;
     private final double extendSpeed;
@@ -24,14 +34,18 @@ public class Intake extends SubsystemBase{
     //Initialize the intake
 
     public Intake(){
-        this.intakeMotor = new VictorSP(intakeMotorPort); //Constants File
-        this.extendMotor = new VictorSP(extendIntakeMotorPort); //Constants File
+        this.intakeMotor = new PWMSparkMax(intakeMotorPort); //Constants File
+        this.extendMotor = new PWMSparkMax(extendIntakeMotorPort); //Constants File
 
         this.intakeSpeed = ConstIntakeSpeed; //Constants File
         this.extendSpeed = ConstExtendIntakeSpeed; //Constants File
     }
 
-    //Lambda Commands (for testing)
+    //Stopper Methods
+    public void stopIntake(){intakeMotor.set(0);}
+    public void stopExtension(){extendMotor.set(0);}
+
+    //Lambda Commands
     public Command runIntake2(){
         return startEnd(
                 () -> { //run intake
@@ -40,8 +54,8 @@ public class Intake extends SubsystemBase{
                     SmartDashboard.putBoolean("Intaking?", true);
                     SmartDashboard.putBoolean("IntakeRunning?", true);
                 },
-                () -> { //stop intake
-                    intakeMotor.set(0);
+                () -> { //stop intake3
+                    stopIntake();
                     System.out.println("Intake Command Stopped");
                     SmartDashboard.putBoolean("Intaking?", false);
                     SmartDashboard.putBoolean("IntakeRunning?", false);
@@ -58,7 +72,7 @@ public class Intake extends SubsystemBase{
                     SmartDashboard.putBoolean("IntakeRunning?", true);
                 },
                 () -> { //stop outtake
-                    intakeMotor.set(0);
+                    stopIntake();
                     System.out.println("Intake Command Stopped");
                     SmartDashboard.putBoolean("Outtaking?", false);
                     SmartDashboard.putBoolean("IntakeRunning?", false);
@@ -73,9 +87,11 @@ public class Intake extends SubsystemBase{
                     System.out.println("Intake Extending");
                     SmartDashboard.putBoolean("intakeExtending?", true);
                     SmartDashboard.putBoolean("intakeArmRunning?", true);
+
+                    if(m_bottomlimitSwitch.get() && extendMotor.get() > 0){stopExtension();}
                 },
                 () -> { //stop extending the intake
-                    extendMotor.set(0);
+                    stopExtension();
                     System.out.println("Extending Stopped");
                     SmartDashboard.putBoolean("intakeExtending?", false);
                     SmartDashboard.putBoolean("intakeArmRunning?", false);
@@ -90,14 +106,18 @@ public class Intake extends SubsystemBase{
                     System.out.println("Intake Retracting");
                     SmartDashboard.putBoolean("intakeRetracting?", true);
                     SmartDashboard.putBoolean("intakeArmRunning?", true);
+
+                    if(m_toplimitSwitch.get() && extendMotor.get() < 0){stopExtension();}
                 },
                 () -> { //stop retracting the intake
-                    extendMotor.set(0);
+                    stopExtension();
                     System.out.println("Extending Stopped");
                     SmartDashboard.putBoolean("intakeRetracting?", false);
                     SmartDashboard.putBoolean("intakeArmRunning?", false);
                 }
         );
     }
+
+
 
 }

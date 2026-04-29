@@ -4,14 +4,17 @@
 
 package frc.robot;
 
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.commands.elevatorCommand;
 import frc.robot.subsystems.*;
 import swervelib.SwerveInputStream;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 
 import java.io.File;
+import java.util.function.DoubleSupplier;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
@@ -31,6 +34,7 @@ public class RobotContainer {
 
   private final SendableChooser<Command> autoChooser;
 
+  //Hardware defined here:
   private final CommandPS4Controller driverCtrl = new CommandPS4Controller(OperatorConstants.kDriverControllerPort);
   private final CommandPS4Controller operatorCtrl = new CommandPS4Controller(OperatorConstants.kOperatorControllerPort);
 
@@ -41,6 +45,7 @@ public class RobotContainer {
   private final Shooter shooter = new Shooter();
   private final Indexer indexer = new Indexer();
   private final Pneumatics pneumatics = new Pneumatics();
+  private final Elevator elevator = new Elevator();
 
   //Intake Commands
   Command runIntake = intake.runIntake2();
@@ -54,8 +59,12 @@ public class RobotContainer {
 
   //Pneumatic Commands
   Command toggleSolenoid = pneumatics.toggleSolenoid();
-  Command enableCompressor = pneumatics.enableCompressor();
-  Command killCompressor = pneumatics.killCompressor();
+  Command toggleCompressor = pneumatics.toggleCompressor();
+
+  //Elevator Commands
+  elevatorCommand elevatorCMD = new elevatorCommand(elevator);
+
+
 
   //Other Commands
   WaitCommand wait = new WaitCommand(1.25);
@@ -117,10 +126,13 @@ public class RobotContainer {
             .finallyDo(() -> SmartDashboard.putBoolean("isRobotOriented", false)));
 
     //Intake Bindings
+
     driverCtrl.L1().toggleOnTrue(runIntake);
     driverCtrl.square().toggleOnTrue(runOuttake);
+
+    /*
     driverCtrl.L2().toggleOnTrue(extendIntake);
-    driverCtrl.R2().toggleOnTrue(retractIntake);
+    driverCtrl.R2().toggleOnTrue(retractIntake); */
 
     //Shooter/Indexer Bindings
     driverCtrl.R1().toggleOnTrue(runShooter
@@ -134,8 +146,12 @@ public class RobotContainer {
 
     //Pneumatic Bindings
     driverCtrl.cross().toggleOnTrue(toggleSolenoid);
-    driverCtrl.share().onTrue(enableCompressor);
-    driverCtrl.options().onTrue(killCompressor);
+    driverCtrl.triangle().toggleOnTrue(toggleCompressor);
+
+
+    //Elevator Bindings
+    elevator.setDefaultCommand(elevatorCMD);
+
 
   }
 

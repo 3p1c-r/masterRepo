@@ -19,6 +19,30 @@ public class Pneumatics extends SubsystemBase {
         m_solenoid = new Solenoid(PneumaticsModuleType.REVPH, 0); //channel should be the can id port
         m_compressor = new Compressor(PneumaticsModuleType.REVPH);
     }
+
+    public Command toggleSolenoid() {
+        return runOnce(
+                () -> {
+                    m_solenoid.toggle();
+                    SmartDashboard.putBoolean("SolenoidExtended?", m_solenoid.get());
+                    System.out.println("solenoid extension set to " + m_solenoid.get());
+                }
+        );
+    }
+
+    public Command toggleCompressor() {
+        return runOnce(
+                () -> {
+                    if (m_compressor.isEnabled()) {m_compressor.disable();
+                    } else {m_compressor.enableDigital();}
+
+                    String compressorEnabled = (m_compressor.isEnabled()) ? "enabled" : "disabled";
+
+                    SmartDashboard.putBoolean("CompressorEnabled?", m_compressor.isEnabled());
+                    System.out.println("compressor " + compressorEnabled);
+                });
+    }
+
     /**
      * Example command factory method.
      *
@@ -42,15 +66,7 @@ public class Pneumatics extends SubsystemBase {
                 });
     }
 
-    public Command toggleSolenoid() {
-        return runOnce(
-                () -> {
-                    m_solenoid.toggle();
-                    SmartDashboard.putBoolean("SolenoidExtended?", m_solenoid.get());
-                    System.out.println("solenoid extension set to " + m_solenoid.get());
-                }
-        );
-    }
+
     //not required, purely for reference/simulation
     public Command enableCompressor(){
         return runOnce(() -> {
@@ -60,16 +76,13 @@ public class Pneumatics extends SubsystemBase {
         });
     }
 
-    public Command killCompressor() {
-        return runOnce(
-                () -> {
-                    m_compressor.disable();
-                    SmartDashboard.putBoolean("CompressorEnabled?", false);
-                    System.out.println("compressor disabled");
-                });
+    public Command killCompressor(){
+        return runOnce(() -> {
+            m_compressor.disable();
+            SmartDashboard.putBoolean("CompressorEnabled?", false);
+            System.out.println("compressor disabled");
+        });
     }
-
-
 }
 
 
