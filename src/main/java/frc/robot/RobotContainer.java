@@ -63,6 +63,10 @@ public class RobotContainer {
 
   //Elevator Commands
   elevatorCommand elevatorCMD = new elevatorCommand(elevator);
+  Command goToBottom = elevator.goToBottom();
+  Command goToLow = elevator.goToLow();
+  Command goToMid = elevator.goToMid();
+  Command goToHigh = elevator.goToHigh();
 
 
 
@@ -75,6 +79,11 @@ public class RobotContainer {
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
     // Configure the trigger bindings
+    elevatorCMD.addRequirements(elevator);
+    goToBottom.addRequirements(elevator);
+    goToLow.addRequirements(elevator);
+    goToMid.addRequirements(elevator);
+    goToHigh.addRequirements(elevator);
 
     NamedCommands.registerCommand("intake", runIntake);
     NamedCommands.registerCommand("extendIntake", extendIntake);
@@ -121,14 +130,14 @@ public class RobotContainer {
 
     //Drivebase Bindings
     drivebase.setDefaultCommand(driveFieldOrientedAngularVelocitySim);
-    driverCtrl.circle().toggleOnTrue(driveRobotOrientedAngularVelocity
-            .beforeStarting(() -> SmartDashboard.putBoolean("isRobotOriented", true))
-            .finallyDo(() -> SmartDashboard.putBoolean("isRobotOriented", false)));
+    //driverCtrl.circle().toggleOnTrue(driveRobotOrientedAngularVelocity
+          //  .beforeStarting(() -> SmartDashboard.putBoolean("isRobotOriented", true))
+          //  .finallyDo(() -> SmartDashboard.putBoolean("isRobotOriented", false)));
 
     //Intake Bindings
 
     driverCtrl.L1().toggleOnTrue(runIntake);
-    driverCtrl.square().toggleOnTrue(runOuttake);
+    //driverCtrl.square().toggleOnTrue(runOuttake);
 
     /*
     driverCtrl.L2().toggleOnTrue(extendIntake);
@@ -145,12 +154,16 @@ public class RobotContainer {
     );
 
     //Pneumatic Bindings
-    driverCtrl.cross().toggleOnTrue(toggleSolenoid);
-    driverCtrl.triangle().toggleOnTrue(toggleCompressor);
+    //driverCtrl.cross().toggleOnTrue(toggleSolenoid);
+    //driverCtrl.triangle().toggleOnTrue(toggleCompressor);
 
 
     //Elevator Bindings
-    elevator.setDefaultCommand(elevatorCMD);
+    driverCtrl.L2().or(driverCtrl.R2()).whileTrue(elevatorCMD);
+    driverCtrl.cross().onTrue(goToBottom);
+    driverCtrl.square().onTrue(goToLow);
+    driverCtrl.circle().onTrue(goToMid);
+    driverCtrl.triangle().onTrue(goToHigh);
 
 
   }

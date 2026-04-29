@@ -14,7 +14,6 @@ public class elevatorCommand extends Command {
 
     public elevatorCommand(Elevator elevator){
         this.elevator = elevator;
-        addRequirements(elevator);
     }
 
     @Override
@@ -29,6 +28,16 @@ public class elevatorCommand extends Command {
         double R2Mapped = map(driverCtrl.getR2Axis(), -1, 1, 0, 1);
         double L2Mapped = map(driverCtrl.getL2Axis(), -1, 1, 0, 1);
         double speed = R2Mapped - L2Mapped;
+
+        if (elevator.isPidMode()){
+            if(speed > 0.05 || speed < 0.05){
+                elevator.setPidMode(false);
+            } else {
+                elevator.setPosition(elevator.getTargetPosition());
+            }
+            return;
+        }
+
         elevator.moveManual(speed);
         System.out.println("L2: " + L2Mapped + " R2: " + R2Mapped + " Speed: " + speed );
     }

@@ -59,8 +59,8 @@ public class Elevator extends SubsystemBase {
 
     // Preset positions in encoder rotations — tune for your robot
     private static final double POSITION_BOTTOM = 0.0;
-    private static final double POSITION_LOW    = 10.0;
-    private static final double POSITION_MID    = 25.0;
+    private static final double POSITION_LOW    = 11.25;
+    private static final double POSITION_MID    = 22.5;
     private static final double POSITION_HIGH   = 45.0;
 
     // How close to target counts as "at position"
@@ -126,48 +126,49 @@ public class Elevator extends SubsystemBase {
 
     /** Move to an arbitrary position using closed-loop PID. */
     public void setPosition(double position) {
+
         m_targetPosition = position;
-        controller.setSetpoint(position, SparkBase.ControlType.kPosition);
+        System.out.println(m_targetPosition);
+        controller.setSetpoint(m_targetPosition, SparkBase.ControlType.kPosition);
     }
 
+    private boolean m_pidMode = false;
+
+    public void setPidMode(boolean pidMode) { m_pidMode = pidMode; }
+    public boolean isPidMode() { return m_pidMode; }
+
     /** Convenience methods for named presets. */
-    public void goToBottom() { setPosition(POSITION_BOTTOM); }
-    public void goToLow()    { setPosition(POSITION_LOW);    }
-    public void goToMid()    { setPosition(POSITION_MID);    }
-    public void goToHigh()   { setPosition(POSITION_HIGH);   }
+    public Command goToBottom() {
+        return setPosTemplate(POSITION_BOTTOM);
+
+    }
+    public Command goToLow()    {
+        return setPosTemplate(POSITION_LOW);
+    }
+    public Command goToMid()    {
+        return setPosTemplate(POSITION_MID);
+    }
+    public Command goToHigh()   {
+        return setPosTemplate(POSITION_HIGH);
+    }
+
+    public Command setPosTemplate(double position) {
+        return run(() -> {
+            setPosition(position); setPidMode(true);
+            SmartDashboard.putNumber("Elevator Speed", m_motor.get());
+            SmartDashboard.putNumber("Elevator Position",      getPosition());
+            SmartDashboard.putNumber("Elevator Target",        m_targetPosition);
+            SmartDashboard.putBoolean("Elevator At Target",    isAtTarget());
+            SmartDashboard.putBoolean("Elevator Bottom Limit", isAtBottom());
+            SmartDashboard.putBoolean("Elevator Top Limit",    isAtTop());
+            SmartDashboard.putBoolean("ElevatorPIDModeOn?", isPidMode());
+        });
+    }
 
     // ---------------------------------------------------------------------------
     // Manual control
-    // ---------------------------------------------------------------------------
+    // --------------------------------------------------------------------------- 
 
-    public Command moveManual(DoubleSupplier speed){
-
-        return run(
-                () -> {
-                    if((isAtBottom() && speed.getAsDouble() < 0) || (isAtTop() && speed.getAsDouble() > 0)){
-                        stop();
-                    }
-
-                    m_motor.set(speed.getAsDouble());
-                    m_targetPosition = getPosition();
-
-                    if (isAtBottom()) {
-                        resetEncoder();
-                    }
-
-
-                    SmartDashboard.putNumber("Elevator Speed", speed.getAsDouble());
-                    SmartDashboard.putNumber("Elevator Position",      getPosition());
-                    SmartDashboard.putNumber("Elevator Target",        m_targetPosition);
-                    SmartDashboard.putBoolean("Elevator At Target",    isAtTarget());
-                    SmartDashboard.putBoolean("Elevator Bottom Limit", isAtBottom());
-                    SmartDashboard.putBoolean("Elevator Top Limit",    isAtTop());
-
-                    System.out.println("elevator moving, speed is: " + speed.getAsDouble());
-                }
-        );
-
-    }
 
     public void moveManual(double speed){
         SmartDashboard.putNumber("Elevator Speed", speed);
@@ -176,6 +177,8 @@ public class Elevator extends SubsystemBase {
         SmartDashboard.putBoolean("Elevator At Target",    isAtTarget());
         SmartDashboard.putBoolean("Elevator Bottom Limit", isAtBottom());
         SmartDashboard.putBoolean("Elevator Top Limit",    isAtTop());
+        SmartDashboard.putBoolean("ElevatorPIDModeOn?", isPidMode());
+
 
         m_motor.set(speed);
         m_targetPosition = getPosition();
@@ -208,6 +211,10 @@ public class Elevator extends SubsystemBase {
 
     public double getPosition(){
         return m_encoder.getPosition();
+    }
+
+    public double getTargetPosition(){
+        return m_targetPosition;
     }
 
     public void resetEncoder() {
@@ -243,10 +250,20 @@ public class Elevator extends SubsystemBase {
 
     @Override
     public void simulationPeriodic() {
-        double rotationsPerSecond = m_motor.get() * 60; // tune 20.0 to match your elevator
+        double motorOutput;
+        System.out.println(m_pidMode);
+        if (m_pidMode) {
+            // Manually simulate proportional control for position
+            double error = m_targetPosition - getPosition();
+            motorOutput = MathUtil.clamp(error * kP * 0.05, kMinOutput, kMaxOutput);
+        } else {
+            motorOutput = m_motor.get();
+        }
+
+        double rotationsPerSecond = motorOutput * 60; // tune 20.0 to match your elevator
         m_encoderSim.iterate(rotationsPerSecond, 0.02);
         // Simulate bottom limit switch — triggers when encoder near zero
-        if (getPosition() <= 0.05 && m_motor.get() <= 0) {
+        if (getPosition() <= POSITION_BOTTOM + POSITION_TOLERANCE  && m_motor.get() <= 0) {
             m_bottomLimitSim.setValue(true); // false = pressed (NC wiring)
         } else {
             m_bottomLimitSim.setValue(false);
