@@ -1,4 +1,4 @@
-package frc.robot.subsystems;
+package frc.robot.simplesubsystems;
 
 
 import edu.wpi.first.wpilibj.motorcontrol.PWMSparkMax;

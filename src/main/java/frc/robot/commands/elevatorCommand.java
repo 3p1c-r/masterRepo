@@ -3,9 +3,9 @@ package frc.robot.commands;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import frc.robot.Constants;
-import frc.robot.subsystems.Elevator;
+import frc.robot.simplesubsystems.Elevator;
 
-import static frc.robot.subsystems.Elevator.map;
+import static frc.robot.simplesubsystems.Elevator.map;
 
 public class elevatorCommand extends Command {
     private final Elevator elevator;
@@ -16,12 +16,7 @@ public class elevatorCommand extends Command {
         this.elevator = elevator;
     }
 
-    @Override
-    public void initialize(){
 
-
-
-    }
     // Called every time the scheduler runs while the command is scheduled.
     @Override
     public void execute() {
@@ -46,8 +41,6 @@ public class elevatorCommand extends Command {
     @Override
     public void end(boolean interrupted) {
         elevator.stop();
-
-
     }
 
     // Returns true when the command should end.

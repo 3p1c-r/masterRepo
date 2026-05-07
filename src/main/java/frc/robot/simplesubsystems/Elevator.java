@@ -1,7 +1,7 @@
 // Copyright (c) FIRST and other WPILib contributors.
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
-package frc.robot.subsystems;
+package frc.robot.simplesubsystems;
 
 import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
@@ -12,20 +12,11 @@ import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
-import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.Encoder;
-import edu.wpi.first.wpilibj.Joystick;
-import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.motorcontrol.PWMSparkMax;
-import edu.wpi.first.wpilibj.motorcontrol.Spark;
 import edu.wpi.first.wpilibj.simulation.DIOSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-
-import java.util.function.DoubleSupplier;
 
 /*
  * Subsystem that takes motor output and converts it into linear motion.
@@ -225,7 +216,7 @@ public class Elevator extends SubsystemBase {
         if (m_pidMode) {
             // Manually simulate proportional control for position
             double error = m_targetPosition - getPosition();
-            motorOutput = MathUtil.clamp(error * kP * 0.05, kMinOutput, kMaxOutput);
+            motorOutput = MathUtil.clamp(error * kP * 0.01, kMinOutput, kMaxOutput);
         } else {motorOutput = m_motor.get();}
 
         double rotationsPerSecond = motorOutput * 60; //Tune this number to match the elevator
