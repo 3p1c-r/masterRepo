@@ -27,6 +27,19 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import java.util.function.DoubleSupplier;
 
+/*
+ * Subsystem that takes motor output and converts it into linear motion.
+ * 
+ * 2 Modes: 
+ * 
+ * PID Mode, which uses a closed-loop controller to move to a setpoint above the base when a button is pressed. 
+ *  - One button for each height: Bottom, Low, Mid, Top
+ * 
+ * Manual Mode: Move the elevator up with right trigger, move it down with left trigger.
+ * 
+ * THIS DOESN'T ONLY HAVE TO BE AN ELEVATOR! It can be any subsystem that would need to convert rotational into linear motion.
+ */
+
 @SuppressWarnings("PMD.RedundantFieldInitializer")
 public class Elevator extends SubsystemBase {
     //-----------------------------------------------
@@ -51,7 +64,7 @@ public class Elevator extends SubsystemBase {
     double sprocketDiameter = 3; //inches
     double gearRatio = 5;
 
-    double distancePerRotation = (sprocketDiameter * Math.PI) / gearRatio;
+    double distancePerRotation = (sprocketDiameter * Math.PI) / gearRatio; //inches
     //-----------------------------------------------
     // POSITIONS
     //-----------------------------------------------
@@ -124,33 +137,24 @@ public class Elevator extends SubsystemBase {
     // PID position control
     // ---------------------------------------------------------------------------
 
+    private boolean m_pidMode = false;
+
     /** Move to an arbitrary position using closed-loop PID. */
     public void setPosition(double position) {
-
         m_targetPosition = position;
         System.out.println(m_targetPosition);
         controller.setSetpoint(m_targetPosition, SparkBase.ControlType.kPosition);
     }
 
-    private boolean m_pidMode = false;
 
     public void setPidMode(boolean pidMode) { m_pidMode = pidMode; }
     public boolean isPidMode() { return m_pidMode; }
 
     /** Convenience methods for named presets. */
-    public Command goToBottom() {
-        return setPosTemplate(POSITION_BOTTOM);
-
-    }
-    public Command goToLow()    {
-        return setPosTemplate(POSITION_LOW);
-    }
-    public Command goToMid()    {
-        return setPosTemplate(POSITION_MID);
-    }
-    public Command goToHigh()   {
-        return setPosTemplate(POSITION_HIGH);
-    }
+    public Command goToBottom() {return setPosTemplate(POSITION_BOTTOM);}
+    public Command goToLow()    {return setPosTemplate(POSITION_LOW);}
+    public Command goToMid()    {return setPosTemplate(POSITION_MID);}
+    public Command goToHigh()   {return setPosTemplate(POSITION_HIGH);}
 
     public Command setPosTemplate(double position) {
         return run(() -> {
@@ -179,52 +183,31 @@ public class Elevator extends SubsystemBase {
         SmartDashboard.putBoolean("Elevator Top Limit",    isAtTop());
         SmartDashboard.putBoolean("ElevatorPIDModeOn?", isPidMode());
 
-
         m_motor.set(speed);
         m_targetPosition = getPosition();
 
-        if((isAtBottom() && speed < 0) || (isAtTop() && speed > 0)){
-            stop();
-            return;
-        }
-
-        if (isAtBottom()) {
-            resetEncoder();
-        }
+        if((isAtBottom() && speed < 0) || (isAtTop() && speed > 0)){stop();return;}
+        if (isAtBottom()) {resetEncoder();}
     }
 
-    public void stop(){
-        m_motor.set(0);
-    }
+    public void stop(){m_motor.set(0);}
 
     // ---------------------------------------------------------------------------
     // Sensors & states
     // ---------------------------------------------------------------------------
 
-    public boolean isAtBottom(){
-        return bottomLimitSwitch.get();
-    }
+    public boolean isAtBottom(){return bottomLimitSwitch.get();}
 
-    public boolean isAtTop(){
-        return topLimitSwitch.get();
-    }
+    public boolean isAtTop(){return topLimitSwitch.get();}
 
-    public double getPosition(){
-        return m_encoder.getPosition();
-    }
+    public double getPosition(){return m_encoder.getPosition();}
 
-    public double getTargetPosition(){
-        return m_targetPosition;
-    }
+    public double getTargetPosition(){return m_targetPosition;}
 
-    public void resetEncoder() {
-        m_encoder.setPosition(0);
-    }
+    public void resetEncoder() {m_encoder.setPosition(0);}
 
     /** Returns true when the elevator is within tolerance of the target. */
-    public boolean isAtTarget() {
-        return Math.abs(getPosition() - m_targetPosition) < POSITION_TOLERANCE;
-    }
+    public boolean isAtTarget() {return Math.abs(getPosition() - m_targetPosition) < POSITION_TOLERANCE;}
 
     public static double map(double value, double inMin, double inMax, double outMin, double outMax) {
         return (value - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
@@ -233,20 +216,7 @@ public class Elevator extends SubsystemBase {
     // ---------------------------------------------------------------------------
     // Periodic
     // ---------------------------------------------------------------------------
-/*
-    @Override
-    public void periodic() {
-        // Keep encoder zeroed whenever the bottom limit is hit
-        if (isAtBottom()) {
-            resetEncoder();
-        }
 
-        SmartDashboard.putNumber("Elevator Position",      getPosition());
-        SmartDashboard.putNumber("Elevator Target",        m_targetPosition);
-        SmartDashboard.putBoolean("Elevator At Target",    isAtTarget());
-        SmartDashboard.putBoolean("Elevator Bottom Limit", isAtBottom());
-        SmartDashboard.putBoolean("Elevator Top Limit",    isAtTop());
-    } */
 
     @Override
     public void simulationPeriodic() {
@@ -256,24 +226,18 @@ public class Elevator extends SubsystemBase {
             // Manually simulate proportional control for position
             double error = m_targetPosition - getPosition();
             motorOutput = MathUtil.clamp(error * kP * 0.05, kMinOutput, kMaxOutput);
-        } else {
-            motorOutput = m_motor.get();
-        }
+        } else {motorOutput = m_motor.get();}
 
-        double rotationsPerSecond = motorOutput * 60; // tune 20.0 to match your elevator
+        double rotationsPerSecond = motorOutput * 60; //Tune this number to match the elevator
         m_encoderSim.iterate(rotationsPerSecond, 0.02);
         // Simulate bottom limit switch — triggers when encoder near zero
         if (getPosition() <= POSITION_BOTTOM + POSITION_TOLERANCE  && m_motor.get() <= 0) {
             m_bottomLimitSim.setValue(true); // false = pressed (NC wiring)
-        } else {
-            m_bottomLimitSim.setValue(false);
-        }
+        } else {m_bottomLimitSim.setValue(false);}
 
         // Simulate top limit switch — triggers when encoder near max
         if (getPosition() >= POSITION_HIGH - POSITION_TOLERANCE && m_motor.get() >= 0) {
             m_topLimitSim.setValue(true); // false = pressed (NC wiring)
-        } else {
-            m_topLimitSim.setValue(false);
-        }
+        } else {m_topLimitSim.setValue(false);}
     }
 }

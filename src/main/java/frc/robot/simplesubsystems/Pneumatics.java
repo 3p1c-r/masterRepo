@@ -11,6 +11,12 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj.Compressor;
 
+/*
+ * General pneumatics class. 
+ * Can be used to toggle mechanisms between two states, like a claw that opens and shuts.
+ * 
+ */
+
 public class Pneumatics extends SubsystemBase {
     private final Solenoid m_solenoid;
     private final Compressor m_compressor;

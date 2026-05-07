@@ -8,6 +8,14 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import static frc.robot.Constants.SubsystemConstants.*;
 
+/* 
+ * A simple flywheel indexer. Works in tandem with the shooter. 
+ * Based on 4015's 2026 indexer. 
+ * See 2026 kitbot design for a somewhat accurate representation of the shooter & indexer classes.
+ * Was designed to shoot fuel in REBUILT 2026.
+ * 
+ * THIS DOESN'T ONLY HAVE TO BE AN INDEXER! It can be any subsystem that needs purely rotational motion.
+ */
 
 public class Indexer extends SubsystemBase{
 

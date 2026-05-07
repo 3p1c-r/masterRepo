@@ -17,6 +17,8 @@ import static frc.robot.Constants.SubsystemConstants.*;
 * Spit out game pieces (if they're stuck)
 *
 * The intake will stop extending or retracting if it hits one of the limit switches.
+
+BASED ON FRC DESIGN'S OTB INTAKE AND 4015'S 2026 INTAKE: https://frcdesign.org/mechanism-examples/intake/slapdown/6423_2024_intake/
 * */
 
 public class Intake extends SubsystemBase{
